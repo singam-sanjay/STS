@@ -20,7 +20,10 @@ matrix: include/matrix.h
 
 
 #Tests
-tests/test_storage_read: matrix mm_io
-	g++ ${DEBUG_FLAGS} --std=c++11 -I ${INCLUDE_PATH} tests/test_storage_read.cpp obj/mm_io.o -o tests/test_storage_read
+tests/test_storage_read_sparse: matrix mm_io
+	g++ ${DEBUG_FLAGS} --std=c++11 -I ${INCLUDE_PATH} tests/test_storage_read_sparse.cpp obj/mm_io.o -o tests/test_storage_read_sparse
 
-tests: tests/test_storage_read
+tests/test_storage_read_dense: matrix mm_io
+	g++ ${DEBUG_FLAGS} --std=c++11 -I ${INCLUDE_PATH} tests/test_storage_read_dense.cpp obj/mm_io.o -o tests/test_storage_read_dense
+
+tests: tests/test_storage_read_sparse tests/test_storage_read_dense
