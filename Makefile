@@ -1,12 +1,26 @@
 
 INCLUDE_PATH="${PWD}/include"
 
-mm_io: include/mm_io.h utils/mm_io.cpp
-	g++ --std=c++11 -I ${INCLUDE_PATH} -c utils/mm_io.cpp -o obj/mm_io.o
+ifeq ($(DEBUG), 1)
+	DEBUG_FLAGS=-g
+else
+	DEBUG_FLAGS=
+endif
 
-utils: mm_io
+mm_io: include/mm_io.h utils/mm_io.cpp obj/mm_io.o
+	g++ ${DEBUG_FLAGS} --std=c++11 -I ${INCLUDE_PATH} -c utils/mm_io.cpp -o obj/mm_io.o
 
-lib/matrix.cpp: include/matrix.h
-	g++ --std=c++11 -I ${INCLUDE_PATH} -c lib/matrix.cpp -o obj/matrix.o
+sp_elem_ptr: include/sp_elem_ptr.h
 
-matrix: include/matrix.h lib/matrix.cpp
+utils: mm_io sp_elem_ptr
+
+include/matrix.h: mm_io
+
+matrix: include/matrix.h
+
+
+#Tests
+tests/test_storage_read: matrix mm_io
+	g++ ${DEBUG_FLAGS} --std=c++11 -I ${INCLUDE_PATH} tests/test_storage_read.cpp obj/mm_io.o -o tests/test_storage_read
+
+tests: tests/test_storage_read
