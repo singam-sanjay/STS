@@ -8,6 +8,7 @@
 #include <typeinfo>
 #include <unordered_map>
 
+#include "check_assert.h"
 #include "mm_io.h"
 #include "sp_elem_ptr.h"
 
@@ -22,12 +23,12 @@ class Matrix {
   const size_t len_data_;
 
  public:
-  Matrix(size_t rows, size_t cols, DType* data, size_t len_data)
+  Matrix(size_t rows, size_t cols, DType *data, size_t len_data)
       : rows_(rows), cols_(cols), data_(data), len_data_(len_data) {}
 
   size_t rows() const { return rows_; }
   size_t cols() const { return cols_; }
-  DType* data() { return data_.get(); }
+  DType *data() { return data_.get(); }
   size_t len_data() { return len_data; }
 
   virtual utils::SparseElementPointer<DType> access(size_t i, size_t j) = 0;
@@ -38,7 +39,7 @@ class DenseMatrix : public Matrix<DType> {
  private:
   const DenseStorageType dense_type_;
 
-  DenseMatrix(size_t rows, size_t cols, DType* data,
+  DenseMatrix(size_t rows, size_t cols, DType *data,
               DenseStorageType dense_type)
       : Matrix<DType>(rows, cols, data, rows * cols), dense_type_(dense_type) {}
 
@@ -49,22 +50,22 @@ class DenseMatrix : public Matrix<DType> {
       throw std::string("Only float and double elementary types supported");
     }
 
-    const char* fname = file_path.c_str();
+    const char *fname = file_path.c_str();
     int M, N;
-    DType* val;
+    DType *val;
     bool r_maj = (dense_type == DenseStorageType::RMaj),
          is_double = (typeid(double) == typeid(DType));
-    int ret_code = utils::mm_io::mm_read_array(fname, &M, &N, (char**)&val,
+    int ret_code = utils::mm_io::mm_read_array(fname, &M, &N, (char **)&val,
                                                is_double, r_maj);
-    if (ret_code != 0) exit(ret_code);
+    CHECK_EQ(ret_code, 0);
 
     size_t rows = M, cols = N;
-    DType* data = new DType[rows * cols];
+    DType *data = new DType[rows * cols];
     for (size_t iter = 0; iter < (M * N); ++iter) {
       data[iter] = val[iter];
     }
     // memcpy(data, val, sizeof(DType) * rows * cols);
-    DenseMatrix<DType>* ptr = new DenseMatrix(rows, cols, data, dense_type);
+    DenseMatrix<DType> *ptr = new DenseMatrix(rows, cols, data, dense_type);
     std::unique_ptr<DenseMatrix<DType>> u_ptr(ptr);
 
     free(val);
@@ -72,18 +73,8 @@ class DenseMatrix : public Matrix<DType> {
   }
 
   utils::SparseElementPointer<DType> access(size_t i, size_t j) {
-    if (i > Matrix<DType>::rows_) {
-      std::stringstream ss;
-      ss << "Row #" << i << "requested in matrix with " << Matrix<DType>::rows_
-         << " rows.";
-      throw ss.str();
-    }
-    if (j > Matrix<DType>::cols_) {
-      std::stringstream ss;
-      ss << "Col #" << j << "requested in matrix with " << Matrix<DType>::cols_
-         << " cols.";
-      throw ss.str();
-    }
+    CHECK_LT(i, Matrix<DType>::rows_);
+    CHECK_LT(j, Matrix<DType>::cols_);
 
     if (dense_type_ == DenseStorageType::RMaj) {
       return &(Matrix<DType>::data_[i * Matrix<DType>::cols_ + j]);
@@ -92,11 +83,11 @@ class DenseMatrix : public Matrix<DType> {
     }
   }
 
-  inline DType* access_fast_RMaj(size_t i, size_t j) {
+  inline DType *access_fast_RMaj(size_t i, size_t j) {
     return &(Matrix<DType>::data_[i * Matrix<DType>::cols_ + j]);
   }
 
-  inline DType* access_fast_CMaj(size_t i, size_t j) {
+  inline DType *access_fast_CMaj(size_t i, size_t j) {
     return &(Matrix<DType>::data_[i + j * Matrix<DType>::rows_]);
   }
 };
@@ -108,7 +99,7 @@ class SparseMatrix : public Matrix<DType> {
   size_t nnz_;
 
  public:
-  SparseMatrix(size_t rows, size_t cols, DType* data, size_t len_data,
+  SparseMatrix(size_t rows, size_t cols, DType *data, size_t len_data,
                SparseStorageType sparse_type, size_t nnz)
       : Matrix<DType>(rows, cols, data, len_data),
         sparse_type_(sparse_type),
@@ -126,15 +117,14 @@ class CSSparseMatrix : public SparseMatrix<DType> {
  private:
   std::unique_ptr<size_t[]> I_data_, J_data_;
 
-  CSSparseMatrix(size_t rows, size_t cols, DType* data,
-                 SparseStorageType sparse_type, size_t nnz, size_t* I_data,
-                 size_t* J_data)
+  CSSparseMatrix(size_t rows, size_t cols, DType *data,
+                 SparseStorageType sparse_type, size_t nnz, size_t *I_data,
+                 size_t *J_data)
       : SparseMatrix<DType>(rows, cols, data, nnz, sparse_type, nnz),
         I_data_(I_data),
         J_data_(J_data) {
-    if (sparse_type != SparseStorageType::CSC) {
-      throw std::string("Currently handling only CSC format !");
-    }
+    CHECK_EQ(sparse_type != SparseStorageType::CSC,
+             "Currently handling only CSC format !");
   }
 
  public:
@@ -144,14 +134,14 @@ class CSSparseMatrix : public SparseMatrix<DType> {
       throw std::string("Only float and double elementary types supported");
     }
 
-    const char* fname = file_path.c_str();
+    const char *fname = file_path.c_str();
     int M, N, nz;
-    double* val;
+    double *val;
     int *I, *J;
 
     int ret_code = utils::mm_io::mm_read_unsymmetric_sparse(fname, &M, &N, &nz,
                                                             &val, &I, &J);
-    if (ret_code != 0) exit(ret_code);
+    CHECK_EQ(ret_code, 0);
 
     std::unordered_map<size_t, std::unordered_map<size_t, double>>
         sparse_matrix_col_maj;
@@ -159,11 +149,9 @@ class CSSparseMatrix : public SparseMatrix<DType> {
       double value = val[iter];
       int i = I[iter];
       int j = J[iter];
-      auto& col = sparse_matrix_col_maj[j];
+      auto &col = sparse_matrix_col_maj[j];
       bool inserted = col.insert({i, value}).second;
-      if (!inserted) {
-        throw std::string("Multiple values for same location !");
-      }
+      CHECK(inserted, "Multiple values for same location !");
     }
 
     free(val);
@@ -171,11 +159,11 @@ class CSSparseMatrix : public SparseMatrix<DType> {
     free(J);
 
     std::map<size_t, std::map<size_t, double>> sparse_matrix_col_maj_ordered;
-    for (auto& col_pair : sparse_matrix_col_maj) {
+    for (auto &col_pair : sparse_matrix_col_maj) {
       size_t j = col_pair.first;
-      auto& col = col_pair.second;
-      auto& col_ordered = sparse_matrix_col_maj_ordered[j];
-      for (auto& row_pair : col) {
+      auto &col = col_pair.second;
+      auto &col_ordered = sparse_matrix_col_maj_ordered[j];
+      for (auto &row_pair : col) {
         size_t i = row_pair.first;
         double value = row_pair.second;
         col_ordered[i] = value;
@@ -183,7 +171,7 @@ class CSSparseMatrix : public SparseMatrix<DType> {
     }
 
     size_t rows = M, cols = N, nnz = nz;
-    DType* data = new DType[nnz];
+    DType *data = new DType[nnz];
     size_t *I_data = new size_t[nnz], *J_data = new size_t[cols + 1];
 
     for (size_t j = 0; j <= cols; ++j) {
@@ -191,13 +179,13 @@ class CSSparseMatrix : public SparseMatrix<DType> {
     }
     size_t previous_col = 0;
     size_t data_iter = 0;
-    for (auto& col_pair : sparse_matrix_col_maj_ordered) {
+    for (auto &col_pair : sparse_matrix_col_maj_ordered) {
       size_t curr_col_num = col_pair.first;
       for (size_t j = previous_col + 2; j <= curr_col_num; ++j) {
         J_data[j] = J_data[j - 1];
       }
-      auto& col = col_pair.second;
-      for (auto& row_pair : col) {
+      auto &col = col_pair.second;
+      for (auto &row_pair : col) {
         size_t curr_row_num = row_pair.first;
         double value = row_pair.second;
         I_data[data_iter] = curr_row_num;
@@ -212,25 +200,15 @@ class CSSparseMatrix : public SparseMatrix<DType> {
       J_data[j] = J_data[j - 1];
     }
 
-    auto* ptr = new CSSparseMatrix(rows, cols, data, SparseStorageType::CSC,
+    auto *ptr = new CSSparseMatrix(rows, cols, data, SparseStorageType::CSC,
                                    nnz, I_data, J_data);
     std::unique_ptr<CSSparseMatrix> u_ptr(ptr);
     return std::move(u_ptr);
   }
 
   utils::SparseElementPointer<DType> access(size_t i, size_t j) {
-    if (i > Matrix<DType>::rows_) {
-      std::stringstream ss;
-      ss << "Row #" << i << "requested in matrix with " << Matrix<DType>::rows_
-         << " rows.";
-      throw ss.str();
-    }
-    if (j > Matrix<DType>::cols_) {
-      std::stringstream ss;
-      ss << "Col #" << j << "requested in matrix with " << Matrix<DType>::cols_
-         << " cols.";
-      throw ss.str();
-    }
+    CHECK_LT(i, Matrix<DType>::rows_);
+    CHECK_LT(j, Matrix<DType>::cols_);
 
     // NOTE: Assumes CSC storage format
     size_t col_idx = J_data_[j];
@@ -254,8 +232,8 @@ class CSSparseMatrix : public SparseMatrix<DType> {
     return NULL;
   }
 
-  size_t* I_data() const { return I_data_; }
-  size_t* J_data() const { return I_data_; }
+  size_t *I_data() const { return I_data_; }
+  size_t *J_data() const { return I_data_; }
 
   CSSparseMatrix() = delete;
 };

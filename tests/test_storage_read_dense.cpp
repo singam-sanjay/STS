@@ -4,15 +4,12 @@
 #include "matrix.h"
 
 int main(int argc, char* argv[]) {
-  if (argc != 3) throw std::string("argc not 3 !");
+  CHECK(argc != 3, "Need 2 arguments: ./a.out dense.mtx is_CMaj");
 
   std::string file_name(argv[1]);
   bool is_RMaj = (strcmp(argv[2], "0") == 0);
   bool is_CMaj = (strcmp(argv[2], "1") == 0);
-  if (!(is_RMaj || is_CMaj)) {
-    std::cerr << "Invalid input for dense storage format" << std::endl;
-    exit(1);
-  }
+  CHECK(is_RMaj || is_CMaj, "Invalid input for dense storage format");
   DenseStorageType storage_type =
       (is_RMaj ? DenseStorageType::RMaj : DenseStorageType::CMaj);
 

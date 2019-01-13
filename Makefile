@@ -14,7 +14,9 @@ mm_io: include/mm_io.h utils/mm_io.cpp obj/mm_io.o
 
 sp_elem_ptr: include/sp_elem_ptr.h
 
-utils: mm_io sp_elem_ptr
+check_utils: include/check_utils.h
+
+utils: mm_io sp_elem_ptr check_utils
 
 include/matrix.h: mm_io
 
