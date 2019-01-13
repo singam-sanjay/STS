@@ -29,6 +29,8 @@ int mm_read_mtx_crd_data ( FILE *f, int M, int N, int nz, int I[], int J[],
 int mm_read_mtx_crd_entry ( FILE *f, int *I, int *J, double *real, double *img,
   MM_typecode matcode );
 int mm_read_mtx_crd_size ( FILE *f, int *M, int *N, int *nz );
+int mm_read_array(const char *fname, int *M_, int *N_, char **val_,
+  bool is_double_, bool r_maj_);
 int mm_read_unsymmetric_sparse ( const char *fname, int *M_, int *N_, int *nz_,
   double **val_, int **I_, int **J_ );
 char *mm_strdup ( const char *s );

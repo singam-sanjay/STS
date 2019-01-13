@@ -475,6 +475,78 @@ int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )
 }
 /******************************************************************************/
 
+int mm_read_array(const char *fname, int *M_, int *N_, char **val_,
+  bool is_double_, bool r_maj_)
+
+/******************************************************************************/
+/*
+  Purpose:
+
+    MM_READ_UNSYMMETRIC_SPARSE ???
+
+  Modified:
+
+    31 October 2008
+*/
+{
+    FILE *f;
+    MM_typecode matcode;
+    int M, N;
+
+    if ((f = fopen(fname, "r")) == NULL)
+            return -1;
+
+    if (mm_read_banner(f, &matcode) != 0)
+    {
+        printf("mm_read_array: Could not process Matrix Market banner ");
+        printf(" in file [%s]\n", fname);
+	fflush(stdout);
+        return -1;
+    }
+
+    if ( !(mm_is_real(matcode) && mm_is_matrix(matcode) &&
+            mm_is_dense(matcode)))
+    {
+        fprintf(stderr, "Sorry, this application does not support ");
+        fprintf(stderr, "Market Market type: [%s]\n",
+                mm_typecode_to_str(matcode));
+	fflush(stderr);
+        return -1;
+    }
+
+    int ret_code = mm_read_mtx_array_size( f, &M, &N );
+    if (ret_code != 0) {
+        fprintf(stderr, "Sorry, unable to read array size\n");
+        fflush(stderr);
+        return ret_code;
+    }
+    *M_ = M;
+    *N_ = N;
+    size_t num_bytes = ((is_double_ ? sizeof(double) : sizeof(float))*M*N);
+    *val_ = (char*)malloc(num_bytes);
+
+    for (size_t i=0; i<M; i++) {
+        for (size_t j=0 ; j<N; ++j) {
+	    double elem;
+            if (fscanf(f, "%lg", &elem) != 1) {
+                fprintf(stderr, "MM_PREMATURE_EOF !\n");
+                fflush(stderr);
+                return MM_PREMATURE_EOF;
+	    }
+            size_t lin_idx = ( r_maj_ ? (i * N + j) : (i + j * M) );
+      	    if (is_double_) {
+	      *(*((double**)val_) + lin_idx) = elem;
+	    } else {
+	      *(*((float**)val_) + lin_idx) = (float)elem;
+	    }
+        }
+    }
+
+    fclose(f);
+    return 0;
+}
+/******************************************************************************/
+
 int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
                 double **val_, int **I_, int **J_)
 
