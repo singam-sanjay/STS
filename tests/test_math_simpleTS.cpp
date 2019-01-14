@@ -10,12 +10,26 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<DenseMatrix<double>> b = std::move(
       DenseMatrix<double>::ConstructFromFile(b_file, DenseStorageType::RMaj));
 
-  math::SimpleSparseTriangularSolve<double>(A.get(), b.get());
-  for (size_t i = 0; i < b->rows(); ++i) {
-    for (size_t j = 0; j < b->cols(); ++j) {
-      std::cout << *(b->access(i, j)) << ' ';
+  {
+    std::unique_ptr<DenseMatrix<double>> b_clone = std::move(b->clone());
+    math::SimpleSparseTriangularSolve<double>(A.get(), b_clone.get());
+    for (size_t i = 0; i < b_clone->rows(); ++i) {
+      for (size_t j = 0; j < b_clone->cols(); ++j) {
+        std::cout << *(b_clone->access(i, j)) << ' ';
+      }
+      std::cout << '\n';
     }
-    std::cout << '\n';
+  }
+
+  {
+    std::unique_ptr<DenseMatrix<double>> b_clone = std::move(b->clone());
+    math::Opt1SparseTriangularSolve<double>(A.get(), b_clone.get());
+    for (size_t i = 0; i < b_clone->rows(); ++i) {
+      for (size_t j = 0; j < b_clone->cols(); ++j) {
+        std::cout << *(b_clone->access(i, j)) << ' ';
+      }
+      std::cout << '\n';
+    }
   }
   return 0;
 }
