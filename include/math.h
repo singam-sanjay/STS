@@ -115,7 +115,7 @@ void Opt2SparseTriangularSolve(CSSparseMatrix<DType>* A,
   DType* A_data = A->data();
   size_t *I_data = A->I_data(), *J_data = A->J_data();
 
-#pragma omp parallel num_threads(1)
+#pragma omp parallel num_threads(2)
   {
 #define VECTOR_SIZE 8
     // DType vector_b[VECTOR_SIZE], vector_A[VECTOR_SIZE];
@@ -124,6 +124,7 @@ void Opt2SparseTriangularSolve(CSSparseMatrix<DType>* A,
       double b_solution = b_data[j];
       const size_t curr_col_idx = J_data[j], next_col_idx = J_data[j + 1];
       b_solution /= A_data[curr_col_idx];
+#pragma omp barrier
 #pragma omp single
       { b_data[j] = b_solution; }
 
