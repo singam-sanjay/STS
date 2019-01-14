@@ -39,6 +39,7 @@ void benchmark(char* argv[]) {
     // b_clone_2->print(std::cout);
   }
 
+  // Verification
   std::cout << (*b_clone_1 == *b_clone_2 ? "Matrices equal !"
                                          : "Matrices not equal !")
             << std::endl;
@@ -51,6 +52,7 @@ void benchmark(char* argv[]) {
     // b_clone_2->print(std::cout);
   }
 
+  // Verification
   std::cout << (*b_clone_1 == *b_clone_3 ? "Matrices equal !"
                                          : "Matrices not equal !")
             << std::endl;
