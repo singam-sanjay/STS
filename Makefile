@@ -37,6 +37,6 @@ tests/test_storage_read_dense: matrix utils
 	g++ ${DEBUG_FLAGS} ${OPT_FLAGS} --std=c++11 -I ${INCLUDE_PATH} tests/test_storage_read_dense.cpp obj/mm_io.o -o tests/test_storage_read_dense
 
 tests/test_math_simpleTS: matrix math utils
-	g++ ${DEBUG_FLAGS} ${OPT_FLAGS} --std=c++11 -I ${INCLUDE_PATH} tests/test_math_simpleTS.cpp obj/mm_io.o -o tests/test_math_simpleTS
+	g++ ${DEBUG_FLAGS} ${OPT_FLAGS} -fopt-info-vec-optimized -fopenmp --std=c++11 -I ${INCLUDE_PATH} tests/test_math_simpleTS.cpp obj/mm_io.o -o tests/test_math_simpleTS
 
 tests: tests/test_storage_read_sparse tests/test_storage_read_dense tests/test_math_simpleTS
