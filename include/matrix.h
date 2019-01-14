@@ -82,6 +82,18 @@ class DenseMatrix : public Matrix<DType> {
     return std::move(u_ptr);
   }
 
+  std::unique_ptr<DenseMatrix<DType>> clone() {
+    DType *new_data = new DType[Matrix<DType>::len_data_];
+    for (size_t iter = 0; iter < Matrix<DType>::len_data_; ++iter) {
+      new_data[iter] = Matrix<DType>::data_[iter];
+    }
+
+    DenseMatrix<DType> *ptr = new DenseMatrix(
+        Matrix<DType>::rows_, Matrix<DType>::cols_, new_data, dense_type_);
+    std::unique_ptr<DenseMatrix<DType>> u_ptr(ptr);
+    return std::move(u_ptr);
+  }
+
   // Safe element access method
   utils::SparseElementPointer<DType> access(size_t i, size_t j) {
     CHECK_LT(i, Matrix<DType>::rows_);
