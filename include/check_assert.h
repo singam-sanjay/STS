@@ -1,6 +1,9 @@
 #include <cstdlib>
 #include <iostream>
 
+#ifndef _CHECK_ASSERTS_
+#define _CHECK_ASSERTS_
+
 #define CHECK(COND, ERR_MSG)                                          \
   {                                                                   \
     if (!(COND)) {                                                    \
@@ -27,3 +30,8 @@
                           std::string(") >= ") + #VAL2 + std::string("(") +  \
                           std::to_string(_val2) + std::string(")")));        \
   }
+
+#define REPORT(x) \
+  { std::cout << #x << " = " << x << '\n'; }
+
+#endif

@@ -4,7 +4,7 @@
 #include "matrix.h"
 
 int main(int argc, char* argv[]) {
-  CHECK(argc != 2, "Need 1 argument: ./a.out sparse.mtx");
+  CHECK(argc == 2, "Need 1 argument: ./a.out sparse.mtx");
 
   std::string file_name(argv[1]);
   std::unique_ptr<CSSparseMatrix<double>> mat =

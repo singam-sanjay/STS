@@ -5,6 +5,9 @@
 *
 *
 */
+#ifndef _MM_IO_
+#define _MM_IO_
+
 namespace utils{
 namespace mm_io {
 
@@ -135,3 +138,5 @@ void timestamp ( void );
 
 }
 }
+
+#endif

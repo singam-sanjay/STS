@@ -1,6 +1,8 @@
 /*
  * Wrapper to simplify access to sparse elements
  */
+#ifndef _SP_ELEM_PTR_
+#define _SP_ELEM_PTR_
 
 namespace utils {
 
@@ -19,3 +21,5 @@ class SparseElementPointer {
 };
 
 }  // namespace utils
+
+#endif

@@ -4,7 +4,7 @@
 #include "matrix.h"
 
 int main(int argc, char* argv[]) {
-  CHECK(argc != 3, "Need 2 arguments: ./a.out dense.mtx is_CMaj");
+  CHECK(argc == 3, "Need 2 arguments: ./a.out dense.mtx is_CMaj");
 
   std::string file_name(argv[1]);
   bool is_RMaj = (strcmp(argv[2], "0") == 0);

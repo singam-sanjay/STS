@@ -1,6 +1,9 @@
 /*
  * Matrix data wrappers
  */
+#ifndef _MATRIX_
+#define _MATRIX_
+
 #include <cstring>
 #include <map>
 #include <memory>
@@ -136,8 +139,8 @@ class CSSparseMatrix : public SparseMatrix<DType> {
       : SparseMatrix<DType>(rows, cols, data, nnz, sparse_type, nnz),
         I_data_(I_data),
         J_data_(J_data) {
-    CHECK_EQ(sparse_type != SparseStorageType::CSC,
-             "Currently handling only CSC format !");
+    CHECK(sparse_type == SparseStorageType::CSC,
+          "Currently handling only CSC format !");
   }
 
  public:
@@ -245,8 +248,10 @@ class CSSparseMatrix : public SparseMatrix<DType> {
     return NULL;
   }
 
-  size_t *I_data() const { return I_data_; }
-  size_t *J_data() const { return I_data_; }
+  size_t *I_data() const { return I_data_.get(); }
+  size_t *J_data() const { return J_data_.get(); }
 
   CSSparseMatrix() = delete;
 };
+
+#endif
