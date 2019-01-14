@@ -15,6 +15,9 @@
 enum SparseStorageType { CSC, CSR };
 enum DenseStorageType { RMaj, CMaj };
 
+/*
+ * Base Matrix type
+ */
 template <class DType>
 class Matrix {
  protected:
@@ -34,6 +37,10 @@ class Matrix {
   virtual utils::SparseElementPointer<DType> access(size_t i, size_t j) = 0;
 };
 
+/*
+ * Specialization for a dense matrix. Can store a matrix in row-major or
+ * column-major format.
+ */
 template <class DType>
 class DenseMatrix : public Matrix<DType> {
  private:
@@ -64,7 +71,7 @@ class DenseMatrix : public Matrix<DType> {
     for (size_t iter = 0; iter < (M * N); ++iter) {
       data[iter] = val[iter];
     }
-    // memcpy(data, val, sizeof(DType) * rows * cols);
+    // memcpy(data, val, sizeof(DType) * rows * cols); // Fails for some reason
     DenseMatrix<DType> *ptr = new DenseMatrix(rows, cols, data, dense_type);
     std::unique_ptr<DenseMatrix<DType>> u_ptr(ptr);
 
@@ -72,6 +79,7 @@ class DenseMatrix : public Matrix<DType> {
     return std::move(u_ptr);
   }
 
+  // Safe element access method
   utils::SparseElementPointer<DType> access(size_t i, size_t j) {
     CHECK_LT(i, Matrix<DType>::rows_);
     CHECK_LT(j, Matrix<DType>::cols_);
@@ -83,6 +91,8 @@ class DenseMatrix : public Matrix<DType> {
     }
   }
 
+  // Fast access methods without bounds-checking and storage-type checking, use
+  // carefully.
   inline DType *access_fast_RMaj(size_t i, size_t j) {
     return &(Matrix<DType>::data_[i * Matrix<DType>::cols_ + j]);
   }
@@ -92,6 +102,9 @@ class DenseMatrix : public Matrix<DType> {
   }
 };
 
+/*
+ * Base class for a sparse matrix.
+ */
 template <class DType>
 class SparseMatrix : public Matrix<DType> {
  protected:
@@ -219,7 +232,7 @@ class CSSparseMatrix : public SparseMatrix<DType> {
       if (I_data_[final_idx] == i) {
         return &Matrix<DType>::data_[final_idx];
       }
-      /*
+      /* Enable this ?
        * if (I_data[final_idx] > i ) {
        *   return 0;
        * }
