@@ -94,6 +94,18 @@ class DenseMatrix : public Matrix<DType> {
     return std::move(u_ptr);
   }
 
+  bool operator==(const DenseMatrix<DType> &other) {
+    if (this->rows_ != other.rows_ || this->cols_ != other.cols_) {
+      return false;
+    }
+    for (size_t iter = 0; iter < this->len_data_; ++iter) {
+      if (this->data_[iter] != other.data_[iter]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Safe element access method
   utils::SparseElementPointer<DType> access(size_t i, size_t j) {
     CHECK_LT(i, Matrix<DType>::rows_);
