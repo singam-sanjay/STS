@@ -10,6 +10,10 @@
         std::chrono::system_clock::now() - ____NOW____);                  \
     std::cout << elapsed.count() << "ms" << std::endl;                    \
   }
+#define TOCK_RETURN()                                      \
+  ((std::chrono::duration_cast<std::chrono::milliseconds>( \
+        std::chrono::system_clock::now() - ____NOW____))   \
+       .count())
 
 int main(int argc, char* argv[]) {
   CHECK(argc == 3, "Usage: ./a.out A_file.mtx B_file.mtx");
@@ -20,10 +24,10 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<DenseMatrix<double>> b = std::move(
       DenseMatrix<double>::ConstructFromFile(b_file, DenseStorageType::RMaj));
 
+  std::unique_ptr<DenseMatrix<double>> b_clone_1 = std::move(b->clone());
   {
-    std::unique_ptr<DenseMatrix<double>> b_clone = std::move(b->clone());
     TICK();
-    math::SimpleSparseTriangularSolve<double>(A.get(), b_clone.get());
+    math::SimpleSparseTriangularSolve<double>(A.get(), b_clone_1.get());
     /*for (size_t i = 0; i < b_clone->rows(); ++i) {
       for (size_t j = 0; j < b_clone->cols(); ++j) {
         std::cout << *(b_clone->access(i, j)) << ' ';
@@ -33,10 +37,10 @@ int main(int argc, char* argv[]) {
     TOCK();
   }
 
+  std::unique_ptr<DenseMatrix<double>> b_clone_2 = std::move(b->clone());
   {
-    std::unique_ptr<DenseMatrix<double>> b_clone = std::move(b->clone());
     TICK();
-    math::Opt1SparseTriangularSolve<double>(A.get(), b_clone.get());
+    math::Opt1SparseTriangularSolve<double>(A.get(), b_clone_2.get());
     /*for (size_t i = 0; i < b_clone->rows(); ++i) {
       for (size_t j = 0; j < b_clone->cols(); ++j) {
         std::cout << *(b_clone->access(i, j)) << ' ';
@@ -45,5 +49,32 @@ int main(int argc, char* argv[]) {
     }*/
     TOCK();
   }
+
+  std::cout << (*b_clone_1 == *b_clone_2 ? "Matrices equal !"
+                                         : "Matrices not equal !")
+            << std::endl;
+
+  size_t time_for_5_iter = 0;
+  for (size_t i = 0; i < 15; ++i) {
+    std::unique_ptr<DenseMatrix<double>> b_local_clone = std::move(b->clone());
+    TICK();
+    math::SimpleSparseTriangularSolve<double>(A.get(), b_local_clone.get());
+    if (i > 9) {
+      time_for_5_iter += TOCK_RETURN();
+    }
+  }
+  std::cout << "Average time (naive) : " << time_for_5_iter / 5.0 << '\n';
+
+  time_for_5_iter = 0;
+  for (size_t i = 0; i < 15; ++i) {
+    std::unique_ptr<DenseMatrix<double>> b_local_clone = std::move(b->clone());
+    TICK();
+    math::Opt1SparseTriangularSolve<double>(A.get(), b_local_clone.get());
+    if (i > 9) {
+      time_for_5_iter += TOCK_RETURN();
+    }
+  }
+  std::cout << "Average time (Opt1) : " << time_for_5_iter / 5.0 << '\n';
+
   return 0;
 }
