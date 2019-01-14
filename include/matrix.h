@@ -53,6 +53,7 @@ class DenseMatrix : public Matrix<DType> {
               DenseStorageType dense_type)
       : Matrix<DType>(rows, cols, data, rows * cols), dense_type_(dense_type) {}
 
+
  public:
   static std::unique_ptr<DenseMatrix> ConstructFromFile(
       std::string file_path, DenseStorageType dense_type) {
@@ -94,12 +95,32 @@ class DenseMatrix : public Matrix<DType> {
     return std::move(u_ptr);
   }
 
+  void print(std::ostream &os) {
+    if (this->dense_type_ == DenseStorageType::RMaj) {
+      for (size_t i = 0; i < this->rows_; ++i) {
+        for (size_t j = 0; j < this->cols_; ++j) {
+          os << *this->access_fast_RMaj(i, j) << ' ';
+        }
+        os << '\n';
+      }
+    } else {
+      for (size_t i = 0; i < this->rows_; ++i) {
+        for (size_t j = 0; j < this->cols_; ++j) {
+          os << *this->access_fast_CMaj(i, j) << ' ';
+        }
+        os << '\n';
+      }
+    }
+  }
+
   bool operator==(const DenseMatrix<DType> &other) {
     if (this->rows_ != other.rows_ || this->cols_ != other.cols_) {
       return false;
     }
     for (size_t iter = 0; iter < this->len_data_; ++iter) {
-      if (this->data_[iter] != other.data_[iter]) {
+      double diff = (double)this->data_[iter] - other.data_[iter];
+      double diff_ratio = abs(diff / other.data_[iter]);
+      if (diff_ratio > 1e-7) {
         return false;
       }
     }
