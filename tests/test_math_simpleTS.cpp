@@ -54,7 +54,6 @@ void benchmark(char* argv[]) {
   std::cout << (*b_clone_1 == *b_clone_3 ? "Matrices equal !"
                                          : "Matrices not equal !")
             << std::endl;
-  /*
   size_t time_for_5_iter = 0;
   for (size_t i = 0; i < 15; ++i) {
     std::unique_ptr<DenseMatrix<DType>> b_local_clone = std::move(b->clone());
@@ -76,7 +75,17 @@ void benchmark(char* argv[]) {
     }
   }
   std::cout << "Average time (Opt1) : " << time_for_5_iter / 5.0 << '\n';
-  */
+
+  time_for_5_iter = 0;
+  for (size_t i = 0; i < 15; ++i) {
+    std::unique_ptr<DenseMatrix<DType>> b_local_clone = std::move(b->clone());
+    TICK();
+    math::Opt2SparseTriangularSolve<DType>(A.get(), b_local_clone.get());
+    if (i > 9) {
+      time_for_5_iter += TOCK_RETURN();
+    }
+  }
+  std::cout << "Average time (Opt2) : " << time_for_5_iter / 5.0 << '\n';
 }
 
 int main(int argc, char* argv[]) {
