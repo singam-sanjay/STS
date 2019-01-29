@@ -53,7 +53,6 @@ class DenseMatrix : public Matrix<DType> {
               DenseStorageType dense_type)
       : Matrix<DType>(rows, cols, data, rows * cols), dense_type_(dense_type) {}
 
-
  public:
   static std::unique_ptr<DenseMatrix> ConstructFromFile(
       std::string file_path, DenseStorageType dense_type) {

@@ -63,7 +63,7 @@ void Opt1SparseTriangularSolve(CSSparseMatrix<DType>* A,
         vector_A[ii] = A_data[lower_bound + i + ii];
       }
 
-      // NOTE: GCC doesn't vectorize this !
+        // NOTE: GCC doesn't vectorize this !
 #ifdef __clang__
 #pragma clang loop vectorize(enable)
 #endif
