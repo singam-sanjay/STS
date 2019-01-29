@@ -50,9 +50,31 @@ void Opt1SparseTriangularSolve(CSSparseMatrix<DType>* A,
   DType* A_data = A->data();
   size_t *I_data = A->I_data(), *J_data = A->J_data();
 
+  auto third_tier_loop = [](int& i, const int& lower_bound, const int& num_iter,
+                            size_t* I_data, DType* b_data, DType* A_data,
+                            const DType& b_solution) {
 #define VECTOR_SIZE 8
-  DType vector_b[VECTOR_SIZE], vector_A[VECTOR_SIZE];
-  int indices[VECTOR_SIZE];
+    for (i = 0; (i + 7) < num_iter; i += VECTOR_SIZE) {
+      DType vector_b[VECTOR_SIZE], vector_A[VECTOR_SIZE];
+      int indices[VECTOR_SIZE];
+      for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
+        indices[ii] = I_data[lower_bound + i + ii];
+        vector_b[ii] = b_data[indices[ii]];
+        vector_A[ii] = A_data[lower_bound + i + ii];
+      }
+
+      // NOTE: GCC doesn't vectorize this !
+      for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
+        vector_b[ii] -= (vector_A[ii] * b_solution);
+      }
+
+      for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
+        b_data[indices[ii]] = vector_b[ii];
+      }
+    }
+#undef VECTOR_SIZE
+  };
+
   for (size_t j = 0; j < A_cols; ++j) {
     DType b_solution = b_data[j];
     const size_t curr_col_idx = J_data[j], next_col_idx = J_data[j + 1];
@@ -71,22 +93,9 @@ void Opt1SparseTriangularSolve(CSSparseMatrix<DType>* A,
     const int lower_bound = ((int)curr_col_idx + 1);
     const int num_iter = upper_bound - lower_bound + 1;
     int i;
-    for (i = 0; (i + 7) < num_iter; i += VECTOR_SIZE) {
-      for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
-        indices[ii] = I_data[lower_bound + i + ii];
-        vector_b[ii] = b_data[indices[ii]];
-        vector_A[ii] = A_data[lower_bound + i + ii];
-      }
 
-      // NOTE: GCC doesn't vectorize this !
-      for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
-        vector_b[ii] -= (vector_A[ii] * b_solution);
-      }
-
-      for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
-        b_data[indices[ii]] = vector_b[ii];
-      }
-    }
+    third_tier_loop(i, lower_bound, num_iter, I_data, b_data, A_data,
+                    b_solution);
 
     for (/*i = i*/; i < num_iter; ++i) {
       int index = I_data[lower_bound + i];
