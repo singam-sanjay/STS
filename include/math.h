@@ -64,6 +64,9 @@ void Opt1SparseTriangularSolve(CSSparseMatrix<DType>* A,
       }
 
       // NOTE: GCC doesn't vectorize this !
+#ifdef __clang__
+#pragma clang loop vectorize(enable)
+#endif
       for (int ii = 0; ii < VECTOR_SIZE; ++ii) {
         vector_b[ii] -= (vector_A[ii] * b_solution);
       }
