@@ -54,7 +54,7 @@ void Opt1SparseTriangularSolve(CSSparseMatrix<DType>* A,
   DType vector_b[VECTOR_SIZE], vector_A[VECTOR_SIZE];
   int indices[VECTOR_SIZE];
   for (size_t j = 0; j < A_cols; ++j) {
-    double b_solution = b_data[j];
+    DType b_solution = b_data[j];
     const size_t curr_col_idx = J_data[j], next_col_idx = J_data[j + 1];
     b_solution /= A_data[curr_col_idx];
     b_data[j] = b_solution;
